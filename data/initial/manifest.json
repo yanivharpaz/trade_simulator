@@ -1,0 +1,73 @@
+{
+  "activeProviderClass": "SyntheticMarketDataProvider",
+  "bar": "1d",
+  "errors": {},
+  "files": [
+    {
+      "bars": 1000,
+      "conid": 8314,
+      "firstTs": "2023-08-19T15:24:19.056145+00:00",
+      "lastTs": "2026-05-15T15:24:19.056145+00:00",
+      "path": "data/initial/ibm_8314_1d.csv",
+      "secType": "STK",
+      "sources": {
+        "synthetic": 1000
+      },
+      "symbol": "IBM"
+    },
+    {
+      "bars": 1000,
+      "conid": 265598,
+      "firstTs": "2023-08-19T15:24:19.068302+00:00",
+      "lastTs": "2026-05-15T15:24:19.068302+00:00",
+      "path": "data/initial/aapl_265598_1d.csv",
+      "secType": "STK",
+      "sources": {
+        "synthetic": 1000
+      },
+      "symbol": "AAPL"
+    },
+    {
+      "bars": 1000,
+      "conid": 12087792,
+      "firstTs": "2023-08-19T15:24:19.079968+00:00",
+      "lastTs": "2026-05-15T15:24:19.079968+00:00",
+      "path": "data/initial/eur_12087792_1d.csv",
+      "secType": "CASH",
+      "sources": {
+        "synthetic": 1000
+      },
+      "symbol": "EUR"
+    },
+    {
+      "bars": 1000,
+      "conid": 495512552,
+      "firstTs": "2023-08-19T15:24:19.091899+00:00",
+      "lastTs": "2026-05-15T15:24:19.091899+00:00",
+      "path": "data/initial/es_495512552_1d.csv",
+      "secType": "FUT",
+      "sources": {
+        "synthetic": 1000
+      },
+      "symbol": "ES"
+    },
+    {
+      "bars": 1000,
+      "conid": 900000001,
+      "firstTs": "2023-08-19T15:24:19.102028+00:00",
+      "lastTs": "2026-05-15T15:24:19.102028+00:00",
+      "path": "data/initial/spy_900000001_1d.csv",
+      "secType": "OPT",
+      "sources": {
+        "synthetic": 1000
+      },
+      "symbol": "SPY"
+    }
+  ],
+  "generatedAt": "2026-05-15T15:24:19.112016+00:00",
+  "lastFallbackError": null,
+  "note": "External datasets are mapped into local IB-shaped contracts; they are not IB market data.",
+  "outsideRth": false,
+  "period": "3y",
+  "provider": "synthetic"
+}

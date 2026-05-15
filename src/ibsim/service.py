@@ -7,6 +7,7 @@ from ibsim.accounts import AccountService
 from ibsim.clock import SimClock
 from ibsim.events import SQLiteEventStore
 from ibsim.marketdata import (
+    CSVReplayMarketDataProvider,
     CompositeMarketDataProvider,
     MarketDataProvider,
     StooqMarketDataProvider,
@@ -63,11 +64,20 @@ class SimulatorService:
     def _build_market_data_provider(self, provider: str | MarketDataProvider | None) -> MarketDataProvider:
         if isinstance(provider, MarketDataProvider):
             return provider
-        provider_name = (provider or os.getenv("IBSIM_MARKET_DATA_PROVIDER") or "external").lower()
+        raw_provider = provider or os.getenv("IBSIM_MARKET_DATA_PROVIDER") or "external"
+        provider_name = raw_provider.lower()
         synthetic = SyntheticMarketDataProvider(self.contracts, self.clock)
         if provider_name == "synthetic":
             self.market_data_provider_name = "synthetic"
             return synthetic
+        if provider_name == "replay":
+            dataset_dir = os.getenv("IBSIM_REPLAY_DIR", "data/initial")
+            self.market_data_provider_name = f"replay:{dataset_dir}"
+            return CompositeMarketDataProvider([CSVReplayMarketDataProvider(self.contracts, dataset_dir), synthetic])
+        if provider_name.startswith(("replay:", "csv:")):
+            dataset_dir = raw_provider.split(":", 1)[1]
+            self.market_data_provider_name = f"replay:{dataset_dir}"
+            return CompositeMarketDataProvider([CSVReplayMarketDataProvider(self.contracts, dataset_dir), synthetic])
         if provider_name == "yahoo":
             self.market_data_provider_name = "yahoo"
             return CompositeMarketDataProvider([YahooFinanceMarketDataProvider(self.contracts), synthetic])
@@ -83,4 +93,4 @@ class SimulatorService:
                     synthetic,
                 ]
             )
-        raise ValueError("market_data_provider must be one of synthetic, yahoo, stooq, external, or a MarketDataProvider")
+        raise ValueError("market_data_provider must be one of synthetic, yahoo, stooq, external, replay, replay:/path, or a MarketDataProvider")

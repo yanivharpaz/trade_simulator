@@ -119,12 +119,12 @@ def fractional_kelly(win_probability: float, payoff_odds: float, fraction: float
     if payoff_odds <= 0:
         raise ValueError("payoffOdds must be positive")
     loss_probability = 1 - win_probability
-    full = max(0.0, (payoff_odds * win_probability - loss_probability) / payoff_odds)
+    full = round(max(0.0, (payoff_odds * win_probability - loss_probability) / payoff_odds), 12)
     applied = max(0.0, min(fraction, 1.0))
     return KellyResult(
         winProbability=win_probability,
         payoffOdds=payoff_odds,
         fullKellyFraction=full,
         appliedFraction=applied,
-        recommendedFraction=full * applied,
+        recommendedFraction=round(full * applied, 12),
     )

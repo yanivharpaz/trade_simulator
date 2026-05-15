@@ -4,7 +4,7 @@ import asyncio
 import json
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import Body, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
 from ibsim.models import OrderTicket
@@ -127,7 +127,7 @@ def create_app(service: SimulatorService | None = None) -> FastAPI:
         }
 
     @app.post("/v1/api/iserver/account/{account_id}/orders")
-    def place_orders(account_id: str, body: Any) -> list[dict[str, object]]:
+    def place_orders(account_id: str, body: Any = Body(...)) -> list[dict[str, object]]:
         require_brokerage()
         tickets = _parse_tickets(body)
         try:
@@ -136,13 +136,13 @@ def create_app(service: SimulatorService | None = None) -> FastAPI:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @app.post("/v1/api/iserver/account/{account_id}/orders/whatif")
-    def what_if(account_id: str, body: Any) -> list[dict[str, object]]:
+    def what_if(account_id: str, body: Any = Body(...)) -> list[dict[str, object]]:
         require_brokerage()
         tickets = _parse_tickets(body)
         return [item.model_dump(mode="json", by_alias=True) for item in svc().orders.what_if(account_id, tickets)]
 
     @app.post("/v1/api/iserver/reply/{reply_id}")
-    def confirm_reply(reply_id: str, body: dict[str, Any] | None = None) -> list[dict[str, object]]:
+    def confirm_reply(reply_id: str, body: dict[str, Any] | None = Body(default=None)) -> list[dict[str, object]]:
         require_brokerage()
         confirmed = True if body is None else bool(body.get("confirmed", True))
         try:
@@ -168,7 +168,7 @@ def create_app(service: SimulatorService | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     @app.patch("/v1/api/iserver/account/{account_id}/order/{order_id}")
-    def replace_order(account_id: str, order_id: int, body: dict[str, Any]) -> dict[str, object]:
+    def replace_order(account_id: str, order_id: int, body: dict[str, Any] = Body(...)) -> dict[str, object]:
         require_brokerage()
         try:
             ticket = OrderTicket.model_validate(body)
@@ -179,7 +179,7 @@ def create_app(service: SimulatorService | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     @app.post("/v1/api/sim/risk/expected-return")
-    def expected_return_route(body: dict[str, Any]) -> dict[str, object]:
+    def expected_return_route(body: dict[str, Any] = Body(...)) -> dict[str, object]:
         return {"expectedReturn": expected_value(body.get("outcomes", []))}
 
     @app.get("/v1/api/sim/marketdata/provider")
@@ -193,12 +193,12 @@ def create_app(service: SimulatorService | None = None) -> FastAPI:
         }
 
     @app.post("/v1/api/sim/risk/metrics")
-    def risk_metrics_route(body: dict[str, Any]) -> dict[str, object]:
+    def risk_metrics_route(body: dict[str, Any] = Body(...)) -> dict[str, object]:
         result = risk_metrics([float(item) for item in body.get("returns", [])])
         return result.model_dump(mode="json", by_alias=True)
 
     @app.post("/v1/api/sim/risk/kelly")
-    def kelly_route(body: dict[str, Any]) -> dict[str, object]:
+    def kelly_route(body: dict[str, Any] = Body(...)) -> dict[str, object]:
         result = fractional_kelly(
             float(body["winProbability"]),
             float(body["payoffOdds"]),
@@ -207,7 +207,7 @@ def create_app(service: SimulatorService | None = None) -> FastAPI:
         return result.model_dump(mode="json", by_alias=True)
 
     @app.post("/v1/api/sim/strategy/dual-sma")
-    def dual_sma_route(body: dict[str, Any]) -> dict[str, object]:
+    def dual_sma_route(body: dict[str, Any] = Body(...)) -> dict[str, object]:
         result = dual_moving_average_backtest(
             body.get("prices", []),
             short_window=int(body.get("shortWindow", 20)),

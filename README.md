@@ -57,6 +57,32 @@ You can inspect the current provider and fallback state:
 curl http://127.0.0.1:5000/v1/api/sim/marketdata/provider
 ```
 
+## Initial Backtest Dataset
+
+Gather OHLCV bars for the seeded contracts into CSV files plus a manifest:
+
+```bash
+ibsim gather-dataset --provider external --period 3y --bar 1d --out data/initial
+```
+
+If you are offline, force deterministic synthetic data:
+
+```bash
+ibsim gather-dataset --provider synthetic --period 3y --bar 1d --out data/initial
+```
+
+The command writes one file per local contract, for example
+`data/initial/aapl_265598_1d.csv`, and `data/initial/manifest.json` with source,
+date range, bar count, and fallback errors. Use `--conids 265598,8314` to collect
+a smaller universe.
+
+Run the simulator from a gathered dataset instead of hitting external sources:
+
+```bash
+IBSIM_MARKET_DATA_PROVIDER=replay IBSIM_REPLAY_DIR=data/initial ibsim --host 127.0.0.1 --port 5000
+IBSIM_MARKET_DATA_PROVIDER=replay:/absolute/or/relative/path ibsim --host 127.0.0.1 --port 5000
+```
+
 ## Implemented Surface
 
 - Session status and keepalive: `/iserver/auth/status`, `/tickle`, `/logout`

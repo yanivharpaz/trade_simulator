@@ -29,6 +29,10 @@ class MarketDataProvider(ABC):
         raise NotImplementedError
 
 
+class ExternalDataError(RuntimeError):
+    pass
+
+
 class ReplayMarketDataProvider(MarketDataProvider):
     """Placeholder interface for lawful replay tapes; v1 ships synthetic data only."""
 
@@ -42,8 +46,91 @@ class ReplayMarketDataProvider(MarketDataProvider):
         raise NotImplementedError("Replay tapes are not loaded in this simulator profile.")
 
 
-class ExternalDataError(RuntimeError):
-    pass
+class CSVReplayMarketDataProvider(MarketDataProvider):
+    """Replay OHLCV bars gathered by `ibsim gather-dataset`."""
+
+    def __init__(self, contracts: dict[int, Contract], dataset_dir: str = "data/initial") -> None:
+        self.contracts = contracts
+        self.dataset_dir = dataset_dir
+        self._bars = self._load_bars()
+
+    def _contract(self, conid: int) -> Contract:
+        try:
+            return self.contracts[conid]
+        except KeyError as exc:
+            raise KeyError(f"Unknown conid {conid}") from exc
+
+    def _load_bars(self) -> dict[int, list[Bar]]:
+        from pathlib import Path
+
+        root = Path(self.dataset_dir)
+        if not root.exists():
+            raise ExternalDataError(f"Replay dataset directory does not exist: {root}")
+        files: list[Path] = []
+        manifest_path = root / "manifest.json"
+        if manifest_path.exists():
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            files = [Path(item["path"]) for item in manifest.get("files", [])]
+        else:
+            files = sorted(root.glob("*.csv"))
+        loaded: dict[int, list[Bar]] = {}
+        for path in files:
+            if not path.is_absolute() and not path.exists():
+                path = root / path
+            if not path.exists():
+                continue
+            with path.open(encoding="utf-8") as fh:
+                for row in csv.DictReader(fh):
+                    conid = int(row["conid"])
+                    loaded.setdefault(conid, []).append(
+                        Bar(
+                            conid=conid,
+                            start=datetime.fromisoformat(row["start"]),
+                            end=datetime.fromisoformat(row["end"]),
+                            open=float(row["open"]),
+                            high=float(row["high"]),
+                            low=float(row["low"]),
+                            close=float(row["close"]),
+                            volume=float(row["volume"]),
+                            source=row.get("source") or "replay",
+                        )
+                    )
+        for conid, bars in loaded.items():
+            loaded[conid] = sorted(bars, key=lambda item: item.start)
+        if not loaded:
+            raise ExternalDataError(f"No replay bars found in {root}")
+        return loaded
+
+    def quote(self, conid: int) -> Quote:
+        contract = self._contract(conid)
+        bars = self._bars.get(conid)
+        if not bars:
+            raise ExternalDataError(f"No replay bars for conid {conid}")
+        bar = bars[-1]
+        spread = _spread_for(contract, bar.close)
+        return Quote(
+            ts=bar.end,
+            conid=conid,
+            bid=round(bar.close - spread / 2, 6),
+            bidSize=max(100.0, bar.volume / 100),
+            ask=round(bar.close + spread / 2, 6),
+            askSize=max(100.0, bar.volume / 100),
+            last=round(bar.close, 6),
+            lastSize=max(1.0, bar.volume / 1000),
+            source=bar.source,
+            delayed=True,
+        )
+
+    def history(self, conid: int, *, period: str = "1d", bar: str = "1h", outside_rth: bool = False) -> list[Bar]:
+        bars = self._bars.get(conid)
+        if not bars:
+            raise ExternalDataError(f"No replay bars for conid {conid}")
+        return bars[-1000:]
+
+    def depth(self, conid: int, *, levels: int = 5) -> list[BookLevel]:
+        quote = self.quote(conid)
+        contract = self._contract(conid)
+        return _synthetic_depth_from_quote(contract, quote, levels=levels)
 
 
 class CompositeMarketDataProvider(MarketDataProvider):
@@ -360,6 +447,9 @@ class SyntheticMarketDataProvider(MarketDataProvider):
     @staticmethod
     def _parse_duration(value: str) -> timedelta:
         value = value.strip().lower()
+        if value.endswith("mo"):
+            number = int(value[:-2]) if value[:-2].isdigit() else 1
+            return timedelta(days=number * 30)
         number = int(value[:-1]) if value[:-1].isdigit() else 1
         unit = value[-1]
         if unit == "s":
@@ -372,6 +462,8 @@ class SyntheticMarketDataProvider(MarketDataProvider):
             return timedelta(days=number)
         if unit == "w":
             return timedelta(weeks=number)
+        if unit == "y":
+            return timedelta(days=number * 365)
         raise ValueError(f"Unsupported duration {value!r}")
 
     def _spread(self, contract: Contract, mid: float) -> float:
