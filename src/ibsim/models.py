@@ -66,6 +66,7 @@ class Contract(BaseModel):
     strike: float | None = None
     right: str | None = None
     multiplier: str | None = None
+    data_symbol: str | None = Field(default=None, alias="dataSymbol")
 
 
 class Quote(BaseModel):
@@ -77,7 +78,7 @@ class Quote(BaseModel):
     ask_size: float = Field(alias="askSize")
     last: float
     last_size: float = Field(alias="lastSize")
-    source: Literal["synthetic", "replay", "hybrid"] = "synthetic"
+    source: Literal["synthetic", "replay", "hybrid", "yahoo", "stooq", "external"] = "synthetic"
     delayed: bool = False
     stale: bool = False
     server_id: str = "q1"
@@ -112,7 +113,7 @@ class Bar(BaseModel):
     low: float
     close: float
     volume: float
-    source: Literal["synthetic", "replay", "hybrid"] = "synthetic"
+    source: Literal["synthetic", "replay", "hybrid", "yahoo", "stooq", "external"] = "synthetic"
 
     def to_web(self) -> dict[str, Any]:
         return {

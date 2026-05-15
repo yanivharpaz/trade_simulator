@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 from ibsim.adapters.tws import TwsSemanticAdapter
+from ibsim.service import SimulatorService
+
+
+def make_adapter() -> TwsSemanticAdapter:
+    return TwsSemanticAdapter(SimulatorService(market_data_provider="synthetic"))
 
 
 def test_tws_connect_emits_readiness_callbacks() -> None:
-    adapter = TwsSemanticAdapter()
+    adapter = make_adapter()
     callbacks = adapter.connect(client_id=7)
     assert [item["callback"] for item in callbacks] == ["managedAccounts", "nextValidId"]
 
 
 def test_tws_place_order_emits_open_order_status_and_execution_callbacks() -> None:
-    adapter = TwsSemanticAdapter()
+    adapter = make_adapter()
     adapter.connect(client_id=7)
     quote = adapter.service.market_data.quote(265598)
     callbacks = adapter.place_order(
@@ -26,7 +31,7 @@ def test_tws_place_order_emits_open_order_status_and_execution_callbacks() -> No
 
 
 def test_tws_open_orders_are_scoped_by_client_id() -> None:
-    adapter = TwsSemanticAdapter()
+    adapter = make_adapter()
     adapter.connect(client_id=7)
     adapter.place_order(
         client_id=7,

@@ -182,6 +182,16 @@ def create_app(service: SimulatorService | None = None) -> FastAPI:
     def expected_return_route(body: dict[str, Any]) -> dict[str, object]:
         return {"expectedReturn": expected_value(body.get("outcomes", []))}
 
+    @app.get("/v1/api/sim/marketdata/provider")
+    def market_data_provider_route() -> dict[str, object]:
+        provider = svc().market_data
+        return {
+            "configured": svc().market_data_provider_name,
+            "activeClass": provider.__class__.__name__,
+            "lastFallbackError": getattr(provider, "last_error", None),
+            "note": "IB-shaped API responses are preserved; prices come from external providers when reachable.",
+        }
+
     @app.post("/v1/api/sim/risk/metrics")
     def risk_metrics_route(body: dict[str, Any]) -> dict[str, object]:
         result = risk_metrics([float(item) for item in body.get("returns", [])])

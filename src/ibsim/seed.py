@@ -20,6 +20,7 @@ def seeded_contracts() -> dict[int, Contract]:
             marketRuleIds=[26],
             tradingHours=["20260515:0930-1600"],
             liquidHours=["20260515:0930-1600"],
+            dataSymbol="AAPL",
         ),
         8314: Contract(
             conid=8314,
@@ -33,6 +34,7 @@ def seeded_contracts() -> dict[int, Contract]:
             marketRuleIds=[26],
             tradingHours=["20260515:0930-1600"],
             liquidHours=["20260515:0930-1600"],
+            dataSymbol="IBM",
         ),
         12087792: Contract(
             conid=12087792,
@@ -45,6 +47,7 @@ def seeded_contracts() -> dict[int, Contract]:
             marketRuleIds=[120],
             tradingHours=["20260515:0000-2359"],
             liquidHours=["20260515:0000-2359"],
+            dataSymbol="EURUSD=X",
         ),
         495512552: Contract(
             conid=495512552,
@@ -59,6 +62,7 @@ def seeded_contracts() -> dict[int, Contract]:
             multiplier="50",
             tradingHours=["20260515:1700-1600"],
             liquidHours=["20260515:0830-1515"],
+            dataSymbol="ES=F",
         ),
         900000001: Contract(
             conid=900000001,
@@ -75,6 +79,7 @@ def seeded_contracts() -> dict[int, Contract]:
             multiplier="100",
             tradingHours=["20260515:0930-1600"],
             liquidHours=["20260515:0930-1600"],
+            dataSymbol="SPY",
         ),
     }
 

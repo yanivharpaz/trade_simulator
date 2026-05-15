@@ -28,7 +28,7 @@ def test_event_store_appends_and_replays() -> None:
 
 
 def test_marketable_limit_order_fills_and_updates_account() -> None:
-    service = SimulatorService()
+    service = SimulatorService(market_data_provider="synthetic")
     quote = service.market_data.quote(265598)
     ticket = OrderTicket.model_validate(
         {
@@ -50,7 +50,7 @@ def test_marketable_limit_order_fills_and_updates_account() -> None:
 
 
 def test_all_in_guardrail_rejects_oversized_order() -> None:
-    service = SimulatorService()
+    service = SimulatorService(market_data_provider="synthetic")
     ticket = OrderTicket.model_validate(
         {
             "conid": 265598,

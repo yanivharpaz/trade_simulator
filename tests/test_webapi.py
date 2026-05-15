@@ -7,7 +7,7 @@ from ibsim.service import SimulatorService
 
 
 def make_client() -> TestClient:
-    return TestClient(create_app(SimulatorService()))
+    return TestClient(create_app(SimulatorService(market_data_provider="synthetic")))
 
 
 def test_session_accounts_snapshot_and_history() -> None:
